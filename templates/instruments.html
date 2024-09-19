@@ -1,0 +1,115 @@
+{% extends "main.html" %}
+
+{% block title %}Работа по логину{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Инструмент управления пользователями</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        Этот инструмент предназначен для управления пользователями по логину. Используйте его на свой страх и риск.
+                        Пожалуйста, убедитесь, что вы понимаете, что делаете, так как неверное использование может привести к нежелательным последствиям.
+                    </p>
+                    <form id="user-form" onsubmit="event.preventDefault(); verifyUser();">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Введите логин пользователя</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="username" name="username" required>
+                                <button type="button" class="btn btn-primary" id="verify-button" onclick="verifyUser()">Верификация</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-info" id="terminals-button" onclick="redirectToTerminals()" disabled>Терминалы</button>
+                        <button type="button" class="btn btn-warning" id="change-password-button" onclick="redirectToChangePassword()" disabled>Смена пароля</button>
+                    </form>
+                    <div id="loading-indicator" style="display: none; margin-top: 10px;">
+                        <p class="text-muted">Загрузка, пожалуйста, подождите...</p>
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+function verifyUser() {
+    const username = document.getElementById('username').value;
+    const verifyButton = document.getElementById('verify-button');
+    const inputField = document.getElementById('username');
+    const loadingIndicator = document.getElementById('loading-indicator');
+
+    if (username.trim()) {
+        // Показать индикатор загрузки
+        loadingIndicator.style.display = 'block';
+
+        fetch('/api/search_users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ search_filter: username, login: username })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                // Пользователь найден, активируем кнопки и отключаем поле ввода и кнопку "Верификация"
+                document.getElementById('terminals-button').disabled = false;
+                document.getElementById('change-password-button').disabled = false;
+                inputField.disabled = true;
+                verifyButton.disabled = true;
+                alert('Пользователь найден и доступен для действий.');
+            } else {
+                // Пользователь не найден или ошибка
+                document.getElementById('terminals-button').disabled = true;
+                document.getElementById('change-password-button').disabled = true;
+                alert('Пользователь не найден или введен неверный логин.');
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            alert('Ошибка при верификации пользователя.');
+            // Сбрасываем состояние кнопок в случае ошибки
+            document.getElementById('terminals-button').disabled = true;
+            document.getElementById('change-password-button').disabled = true;
+        })
+        .finally(() => {
+            // Скрыть индикатор загрузки
+            loadingIndicator.style.display = 'none';
+        });
+    } else {
+        alert('Пожалуйста, введите логин.');
+        // Сбрасываем состояние кнопок, если логин не введен
+        document.getElementById('terminals-button').disabled = true;
+        document.getElementById('change-password-button').disabled = true;
+    }
+}
+
+function redirectToTerminals() {
+    const username = document.getElementById('username').value;
+    if (username.trim()) {
+        window.location.href = `/terminals/${username}`;
+    } else {
+        alert('Пожалуйста, введите логин.');
+    }
+}
+
+function redirectToChangePassword() {
+    const username = document.getElementById('username').value;
+    if (username.trim()) {
+        window.location.href = `/change_pass/${username}`;
+    } else {
+        alert('Пожалуйста, введите логин.');
+    }
+}
+
+
+</script>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "main.html" %}
+
+{% block title %}Отпуска{% endblock %}
+
+{% block body %}
+<div class="container">
+    <h2>Добавить отпуск</h2>
+    <form method="POST" action="{{ url_for('vacations') }}">
+        <div class="mb-3">
+            <label for="employee_name" class="form-label">ФИО кто уходит в отпуск</label>
+            <input type="text" class="form-control" id="employee_name" name="employee_name" required>
+        </div>
+        <div class="mb-3">
+            <label for="cover_name" class="form-label">ФИО кто берет на себя задачи</label>
+            <input type="text" class="form-control" id="cover_name" name="cover_name" required>
+        </div>
+        <div class="mb-3">
+            <label for="vacation_date" class="form-label">Дата</label>
+            <input type="text" class="form-control" id="vacation_date" name="vacation_date" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Добавить</button>
+    </form>
+
+    <hr>
+
+    <h2>Список отпусков</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Занес</th>
+                <th scope="col">Ф.И.О.</th>
+                <th scope="col">Кто заменяет</th>
+                <th scope="col">Дата</th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for vacation in vacations %}
+            <tr>
+                <td>{{ vacation[4] }}</td>
+                <td>{{ vacation[1] }}</td>
+                <td>{{ vacation[2] }}</td>
+                <td>{{ vacation[3] }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('vacations') }}" style="display:inline;">
+                        <input type="hidden" name="id" value="{{ vacation[0] }}">
+                        <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

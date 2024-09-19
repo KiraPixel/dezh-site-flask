@@ -1,0 +1,121 @@
+{% extends "main.html" %}
+
+{% block title %}Терминалы{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-md-12">
+        <h3>Проверка сессий на терминалах</h3>
+        <button class="btn btn-primary mb-3" id="check-all-sessions">Поиск на всех терминалах</button>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Терминал</th>
+                    <th>Действия</th>
+                    <th>Результат</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in range(10, 19) %}
+                <tr id="row-PRD-RDS{{i}}">
+                    <td>PRD-RDS{{i}}</td>
+                    <td>
+                        <button class="btn btn-info" onclick="checkSession('PRD-RDS{{i}}')">Поиск на этом терминале</button>
+                        <button class="btn btn-danger" onclick="logoutSession('PRD-RDS{{i}}')">Выкинуть</button>
+                    </td>
+                    <td id="result-PRD-RDS{{i}}">-</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div id="loading-spinner" class="d-none text-center mt-3">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function checkSession(terminal) {
+    const username = "{{ username }}"; // Передача имени пользователя из бэкенда
+
+    // Показать индикатор загрузки
+    document.getElementById('loading-spinner').classList.remove('d-none');
+
+    fetch('/api/check_user_session', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username: username, terminal: terminal })
+    })
+    .then(response => {
+        // Скрыть индикатор загрузки
+        document.getElementById('loading-spinner').classList.add('d-none');
+        return response.json();
+    })
+    .then(data => {
+        const resultCell = document.getElementById(`result-${terminal}`);
+        if (data.status === 'ok') {
+            resultCell.innerHTML = `Сессия найдена (ID: ${data.session_id})`;
+        } else {
+            resultCell.innerHTML = 'Сессия не найдена';
+        }
+    })
+    .catch(error => {
+        // Скрыть индикатор загрузки
+        document.getElementById('loading-spinner').classList.add('d-none');
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при проверке сессии.');
+    });
+}
+
+function logoutSession(terminal) {
+    const username = "{{ username }}"; // Передача имени пользователя из бэкенда
+    const sessionId = document.getElementById(`result-${terminal}`).innerText.match(/\d+/);
+
+    if (!sessionId) {
+        alert('Сессия не найдена, выкидывать некого.');
+        return;
+    }
+
+    // Показать индикатор загрузки
+    document.getElementById('loading-spinner').classList.remove('d-none');
+
+    fetch('/api/logout_session', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ terminal: terminal, session_id: sessionId[0] })
+    })
+    .then(response => {
+        // Скрыть индикатор загрузки
+        document.getElementById('loading-spinner').classList.add('d-none');
+        return response.json();
+    })
+    .then(data => {
+        const resultCell = document.getElementById(`result-${terminal}`);
+        if (data.status === 'ok') {
+            resultCell.innerHTML = 'Сессия завершена';
+        } else {
+            resultCell.innerHTML = 'Ошибка при завершении сессии';
+        }
+    })
+    .catch(error => {
+        // Скрыть индикатор загрузки
+        document.getElementById('loading-spinner').classList.add('d-none');
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при завершении сессии.');
+    });
+}
+
+// Поиск сессий на всех терминалах
+document.getElementById('check-all-sessions').addEventListener('click', function() {
+    {% for i in range(10, 19) %}
+        checkSession('PRD-RDS{{i}}');
+    {% endfor %}
+});
+</script>
+{% endblock %}
