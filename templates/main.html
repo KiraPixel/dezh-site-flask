@@ -9,13 +9,29 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body>
-
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-lg">
         <a class="navbar-brand" href=""> Дежурный центр</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
+            <button class="btn btn-bd-primary py-2 dropdown-toggle d-flex align-items-center theme-toggle-button" id="themeDropdown" type="button" aria-expanded="false" data-bs-toggle="dropdown" aria-label="Toggle theme">
+                <i class="bi bi-sun-fill my-1 theme-icon-active"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="themeDropdown">
+                <li>
+                    <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="light">
+                        <i class="bi bi-sun-fill me-2 opacity-50"></i> Light
+                        <i class="bi bi-check2 ms-auto d-none"></i>
+                    </button>
+                </li>
+                <li>
+                    <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="dark">
+                        <i class="bi bi-moon-stars-fill me-2 opacity-50"></i> Dark
+                        <i class="bi bi-check2 ms-auto d-none"></i>
+                    </button>
+                </li>
+            </ul>
             <ul class="navbar-nav">
                 <li class="nav-item">
                     <a class="nav-link" href="/vacations">Отпуска</a>
@@ -25,6 +41,9 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/instruments">Работа по логину</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/kuber">Кубер</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/logout">Выйти</a>
@@ -37,6 +56,96 @@
         {% block body %}{% endblock %}
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-JZR6Spejh4U02d8k4p5n8H4o2vJxW5Q3zr4r4wYmoW8aJ7f40QsZyGPRz6auQvZ5" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.slim.js" integrity="sha256-UgvvN8vBkgO0luPSUl2s8TIlOSYRoGFAX4jlCIm9Adc=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+    <script>
+    // Инлайн скрипт для немедленного применения темы из куки
+    (function() {
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const savedTheme = getCookie('theme') || 'light'; // по умолчанию темная тема
+        document.documentElement.setAttribute('data-bs-theme', savedTheme);
+    })();
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const themeDropdownButton = document.getElementById('themeDropdown');
+            const themeButtons = document.querySelectorAll('[data-bs-theme-value]');
+            const dropdowns = document.querySelectorAll('.dropdown-menu');
+
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            function setCookie(name, value, days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                const expires = "expires=" + date.toUTCString();
+                document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+            }
+
+            function setTheme(theme) {
+                document.documentElement.setAttribute('data-bs-theme', theme);
+                setCookie('theme', theme, 365);
+                themeButtons.forEach(button => {
+                    if (button.getAttribute('data-bs-theme-value') === theme) {
+                        button.classList.add('active');
+                        button.setAttribute('aria-pressed', 'true');
+                    } else {
+                        button.classList.remove('active');
+                        button.setAttribute('aria-pressed', 'false');
+                    }
+                });
+                // Закрыть меню после выбора темы
+                themeDropdownButton.classList.remove('show');
+            }
+
+            themeDropdownButton.addEventListener('click', function () {
+                themeDropdownButton.classList.toggle('show');о
+            });
+
+            themeButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    const theme = button.getAttribute('data-bs-theme-value');
+                    setTheme(theme);
+                });
+            });
+
+            document.addEventListener('click', function (event) {
+                const target = event.target;
+                if (!target.closest('.dropdown-menu') && !target.closest('.dropdown-toggle')) {
+                    dropdowns.forEach(dropdown => dropdown.classList.remove('show'));
+                }
+            });
+
+            // Инициализация темы при загрузке страницы
+            const savedTheme = getCookie('theme') || 'auto';
+            setTheme(savedTheme);
+        });
+    </script>
 </body>
 </html>
