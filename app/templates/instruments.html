@@ -25,6 +25,7 @@
                         </div>
                         <button type="button" class="btn btn-info" id="terminals-button" onclick="redirectToTerminals()" disabled>Терминалы</button>
                         <button type="button" class="btn btn-warning" id="change-password-button" onclick="redirectToChangePassword()" disabled>Смена пароля</button>
+                        <button type="button" class="btn btn-success" id="unlock-account" onclick="unlockAccount()" disabled>Активировать учетную запись</button>
                     </form>
                     <div id="loading-indicator" style="display: none; margin-top: 10px;">
                         <p class="text-muted">Загрузка, пожалуйста, подождите...</p>
@@ -63,6 +64,7 @@ function verifyUser() {
                 // Пользователь найден, активируем кнопки и отключаем поле ввода и кнопку "Верификация"
                 document.getElementById('terminals-button').disabled = false;
                 document.getElementById('change-password-button').disabled = false;
+                document.getElementById('unlock-account').disabled = false;
                 inputField.disabled = true;
                 verifyButton.disabled = true;
                 alert('Пользователь найден и доступен для действий.');
@@ -70,6 +72,7 @@ function verifyUser() {
                 // Пользователь не найден или ошибка
                 document.getElementById('terminals-button').disabled = true;
                 document.getElementById('change-password-button').disabled = true;
+                document.getElementById('unlock-account').disabled = true;
                 alert('Пользователь не найден или введен неверный логин.');
             }
         })
@@ -110,6 +113,39 @@ function redirectToChangePassword() {
     }
 }
 
+function unlockAccount() {
+    const username = document.getElementById('username').value.trim();
+    if (!username) {
+        alert('Пожалуйста, введите логин.');
+        return;
+    }
 
+    const email = `${username}@csat.ru`;
+
+    fetch('/api/unlock_account', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ target_user: username })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.status === 'ok') {
+            alert(`Учетная запись для ${email} успешно активирована.`);
+        } else {
+            alert(`Ошибка при активации учетной записи для ${email}.`);
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        alert(`Ошибка при активации учетной записи для ${email}.`);
+    });
+}
 </script>
 {% endblock %}

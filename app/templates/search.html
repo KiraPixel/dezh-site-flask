@@ -1,7 +1,5 @@
 {% extends "main.html" %}
-
 {% block title %}Поиск пользователей{% endblock %}
-
 {% block body %}
 <div class="row">
     <div class="col-md-12">
@@ -13,8 +11,8 @@
                 <form id="search-form">
                     <div class="mb-3">
                         <label for="search_filter" class="form-label">Поисковой фильтр</label>
-                        <input type="text" class="form-control" id="search_filter" name="search_filter" required placeholder="Введите ФИО или используйте * для более качественного поиска">
-                        <div id="search-hints" class="mt-2"></div>
+                        <input type="text" class="form-control" id="search_filter" name="search_filter" required placeholder="Введите Фамилию Имя Отчество">
+                        <small class="form-text text-muted">Формат: Фамилия Имя Отчество</small>
                     </div>
                     <button type="submit" class="btn btn-primary">Искать</button>
                 </form>
@@ -29,8 +27,6 @@
     </div>
 </div>
 
-
-
 <script>
 document.getElementById('search-form').addEventListener('submit', function(event) {
     event.preventDefault();
@@ -38,13 +34,12 @@ document.getElementById('search-form').addEventListener('submit', function(event
 
     // Показать индикатор загрузки
     document.getElementById('loading-spinner').classList.remove('d-none');
-
     fetch('/api/search_users', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ search_filter: searchFilter })
+        body: JSON.stringify({ search_filter: searchFilter  })
     })
     .then(response => {
         if (!response.ok) {
@@ -55,24 +50,35 @@ document.getElementById('search-form').addEventListener('submit', function(event
     .then(data => {
         // Скрыть индикатор загрузки
         document.getElementById('loading-spinner').classList.add('d-none');
-
         if (data.status === 'ok') {
             const results = data.results.map(user => {
-                const cn = user.attributes.cn && user.attributes.cn.length > 0 ? user.attributes.cn[0] : 'N/A';
-                const displayName = user.attributes.displayName && user.attributes.displayName.length > 0 ? user.attributes.displayName[0] : 'N/A';
-                const mail = user.attributes.mail && user.attributes.mail.length > 0 ? user.attributes.mail[0] : 'N/A';
-
-                // Определение имени пользователя
-                const username = mail !== 'N/A' ? mail.split('@')[0] : null;
+                const login = user.Логин || 'N/A';
+                const fio = user.ФИО || 'N/A';
+                const email = user.Почта || 'N/A';
+                const position = user.Должность || 'N/A';
+                const department = user.Отдел || 'N/A';
+                const manager = user.Руководитель || 'N/A';
+                const phones = user.Телефоны || 'N/A';
+                const location = user.Локация || 'N/A';
+                const isActive = user.АктивнаУЗ ? 'Активна' : 'Неактивна';
 
                 return `
                     <div class="card mb-3">
                         <div class="card-body">
-                            <h5 class="card-title">${displayName}</h5>
-                            <p class="card-text">CN: ${cn}<br>Email: ${mail}</p>
-                            <button class="btn btn-info" ${username ? `onclick="redirectToTerminals('${username}')"` : 'onclick="showEmailError()"'}>Терминалы</button>
-                            <button class="btn btn-warning" ${username ? `onclick="redirectToChangePassword('${username}')"` : 'onclick="showEmailError()"'}>Смена пароля</button>
-                            <button class="btn btn-success" ${username ? `onclick="unlockAccount(this)" data-email="${mail}"` : 'onclick="showEmailError()"'}>Активировать учетную запись</button>
+                            <h5 class="card-title">${fio}</h5>
+                            <p class="card-text">
+                                <strong>Логин:</strong> ${login}<br>
+                                <strong>Email:</strong> ${email}<br>
+                                <strong>Должность:</strong> ${position}<br>
+                                <strong>Отдел:</strong> ${department}<br>
+                                <strong>Руководитель:</strong> ${manager}<br>
+                                <strong>Телефоны:</strong> ${phones}<br>
+                                <strong>Локация:</strong> ${location}<br>
+                                <strong>Активность:</strong> ${isActive}
+                            </p>
+                            <button class="btn btn-info" ${email !== 'N/A' ? `onclick="redirectToTerminals('${login}')"` : 'onclick="showEmailError()"'}>Терминалы</button>
+                            <button class="btn btn-warning" ${email !== 'N/A' ? `onclick="redirectToChangePassword('${login}')"` : 'onclick="showEmailError()"'}>Смена пароля</button>
+                            <button class="btn btn-success" ${email !== 'N/A' ? `onclick="unlockAccount('${login}', '${email}')"` : 'onclick="showEmailError()"'}>Активировать учетную запись</button>
                         </div>
                     </div>
                 `;
@@ -85,21 +91,16 @@ document.getElementById('search-form').addEventListener('submit', function(event
     .catch(error => {
         // Скрыть индикатор загрузки
         document.getElementById('loading-spinner').classList.add('d-none');
-
         console.error('Ошибка:', error);
         document.getElementById('search-results').innerText = 'Ошибка при поиске пользователей.';
     });
 });
 
-function unlockAccount(button) {
-    const email = button.getAttribute('data-email');
+function unlockAccount(username, email) {
     if (email === 'N/A') {
         alert('Email пользователя недоступен.');
         return;
     }
-
-    const username = email.split('@')[0]; // Извлекаем первую часть email
-
     fetch('/api/unlock_account', {
         method: 'POST',
         headers: {
@@ -138,5 +139,4 @@ function showEmailError() {
     alert('Email пользователя недоступен.');
 }
 </script>
-
 {% endblock %}

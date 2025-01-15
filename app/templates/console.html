@@ -1,0 +1,198 @@
+{% extends "main.html" %}
+
+{% block title %}Консоль кубера{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <h2>Консоль кубера</h2>
+    <div id="console" class="bg-dark text-white p-3 mb-3" style="height: 600px; overflow-y: auto; border-radius: 5px;">
+        <pre id="console-output"></pre> <!-- используем <pre> для сохранения форматирования -->
+    </div>
+
+    <div class="input-group mb-3">
+        <input type="text" id="command-input" class="form-control" placeholder="Введите команду" aria-label="Команда" aria-describedby="send-button">
+        <button class="btn btn-primary" type="button" id="send-button">Отправить</button>
+    </div>
+
+    <div class="container mt-5">
+    <h4 class="mb-4">Шаблоны команд</h4>
+
+    <!-- Команда 1: Получить статус -->
+    <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">Получить статус</h5>
+            <div class="row g-2">
+                <div class="col-md-8">
+                    <select id="namespace-status" class="form-select">
+                        <option value="prd-el">prd-el</option>
+                        <option value="prd-em">prd-em</option>
+                        <option value="prd-tw">prd-tw</option>
+                        <option value="prd-dvr">prd-dvr</option>
+                        <option value="admin-web-console">admin-web-console</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary w-100" type="button" onclick="sendTemplateCommand('get po', 'namespace-status')">
+                        Отправить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Команда 2: Скейл реплик -->
+    <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">Скейл реплик</h5>
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <input type="text" id="deployment-scale" class="form-control" placeholder="Название пода" value="">
+                </div>
+                <div class="col-md-3">
+                    <input type="number" id="replicas" class="form-control" placeholder="Кол-во реплик" min="0" max="10">
+                </div>
+                <div class="col-md-3">
+                    <select id="namespace-scale" class="form-select">
+                        <option value="prd-el">prd-el</option>
+                        <option value="prd-em">prd-em</option>
+                        <option value="prd-tw">prd-tw</option>
+                        <option value="prd-dvr">prd-dvr</option>
+                        <option value="admin-web-console">admin-web-console</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" type="button" onclick="sendTemplateCommand('scale deployment', 'namespace-scale', 'deployment-scale', 'replicas')">
+                        Отправить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Команда 3: Рестарт подов -->
+    <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">Рестарт подов</h5>
+            <div class="row g-2">
+                <div class="col-md-8">
+                    <input type="text" id="deployment-restart" class="form-control" placeholder="Название пода" value="">
+                </div>
+                <div class="col-md-4">
+                    <select id="namespace-restart" class="form-select">
+                        <option value="prd-el">prd-el</option>
+                        <option value="prd-em">prd-em</option>
+                        <option value="prd-tw">prd-tw</option>
+                        <option value="prd-dvr">prd-dvr</option>
+                        <option value="admin-web-console">admin-web-console</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-primary w-100 mt-3" type="button" onclick="sendTemplateCommand('rollout restart deployment', 'namespace-restart', 'deployment-restart')">
+                Отправить
+            </button>
+        </div>
+    </div>
+</div>
+
+
+</div>
+
+<script>
+    let commandHistory = []; // Массив для хранения истории команд
+    let historyIndex = -1; // Индекс текущей команды в истории
+
+    function sendCommand() {
+        let command = document.getElementById('command-input').value;
+        if (command.trim() !== "") {
+            // Добавляем команду в консоль и в историю
+            let consoleOutput = document.getElementById('console-output');
+            consoleOutput.innerHTML += `> ${command}\n`; // выводим команду с отступом
+            commandHistory.push(command); // Сохраняем команду в историю
+            historyIndex = commandHistory.length; // Обновляем индекс
+
+            // Прокручиваем консоль вниз
+            let consoleDiv = document.getElementById('console');
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+
+            // Очищаем поле ввода
+            document.getElementById('command-input').value = "";
+
+            // Отправляем команду на сервер
+            fetch('/api/kuber', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ command: command })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Проверяем ответ и выводим его в консоль
+                if (data.result) {
+                    consoleOutput.innerHTML += `${data.result}\n`; // добавляем результат
+                } else if (data.error) {
+                    consoleOutput.innerHTML += `Ошибка: ${data.error}\n`; // добавляем ошибку
+                }
+
+                // Прокручиваем консоль вниз
+                consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            })
+            .catch(error => {
+                consoleOutput.innerHTML += `Ошибка: ${error}\n`; // добавляем ошибку
+                consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            });
+        }
+    }
+
+    function sendTemplateCommand(commandType, namespaceId, deploymentId = null, replicasId = null) {
+        let command = '';
+        let namespace = document.getElementById(namespaceId).value;
+        let deployment = deploymentId ? document.getElementById(deploymentId).value : '';
+        let replicas = replicasId ? document.getElementById(replicasId).value : '';
+
+        if (commandType === 'get po') {
+            command = `get po -n=${namespace}`;
+        } else if (commandType === 'scale deployment') {
+            command = `scale deployment ${deployment} --replicas=${replicas} -n=${namespace}`;
+        } else if (commandType === 'rollout restart deployment') {
+            command = `rollout restart deployment ${deployment} -n=${namespace}`;
+        }
+
+        document.getElementById('command-input').value = command;
+        sendCommand();
+    }
+
+    // Обрабатываем нажатие кнопки
+    document.getElementById('send-button').addEventListener('click', function() {
+        sendCommand();
+    });
+
+    // Обрабатываем нажатие клавиши Enter
+    document.getElementById('command-input').addEventListener('keypress', function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();  // Предотвращаем стандартное поведение формы
+            sendCommand();
+        }
+    });
+
+    // Обрабатываем нажатие стрелок вверх и вниз
+    document.getElementById('command-input').addEventListener('keydown', function(event) {
+        if (event.key === "ArrowUp") {
+            if (historyIndex > 0) {
+                historyIndex--; // Переход к предыдущей команде
+                document.getElementById('command-input').value = commandHistory[historyIndex];
+            }
+        } else if (event.key === "ArrowDown") {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++; // Переход к следующей команде
+                document.getElementById('command-input').value = commandHistory[historyIndex];
+            } else if (historyIndex === commandHistory.length - 1) {
+                // Если находимся в последней команде, очищаем поле
+                historyIndex++;
+                document.getElementById('command-input').value = "";
+            }
+        }
+    });
+</script>
+
+{% endblock %}

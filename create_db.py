@@ -1,5 +1,7 @@
 import sqlite3
 
+# Запускается вручную, если нет дб
+
 
 def create_vacation_db():
     conn = sqlite3.connect('vacations.db')

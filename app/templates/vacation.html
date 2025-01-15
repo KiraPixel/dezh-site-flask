@@ -5,7 +5,7 @@
 {% block body %}
 <div class="container">
     <h2>Добавить отпуск</h2>
-    <form method="POST" action="{{ url_for('vacations') }}">
+    <form method="POST" action="{{ url_for('main.vacations') }}">
         <div class="mb-3">
             <label for="employee_name" class="form-label">ФИО кто уходит в отпуск</label>
             <input type="text" class="form-control" id="employee_name" name="employee_name" required>
@@ -42,7 +42,7 @@
                 <td>{{ vacation[2] }}</td>
                 <td>{{ vacation[3] }}</td>
                 <td>
-                    <form method="POST" action="{{ url_for('vacations') }}" style="display:inline;">
+                    <form method="POST" action="{{ url_for('main.vacations') }}" style="display:inline;">
                         <input type="hidden" name="id" value="{{ vacation[0] }}">
                         <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
                     </form>

@@ -11,14 +11,12 @@ def check_user_session_on_terminal(username, terminal):
         try:
             session_info = stdout.decode('cp866').strip()
             session_id = session_info.split()[2]  # Предполагается, что идентификатор сессии находится на 3 позиции
-            print(f"Найдена сессия пользователя {username} на терминале {terminal} с ID {session_id}")
             return session_id
         except Exception as e:
             print(f"Ошибка при обработке сессии: {e}")
             print(f"Полученный вывод: {session_info}")
             return False
     else:
-        print(f"Пользователь {username} не найден на терминале {terminal}.")
         return False
 
 
